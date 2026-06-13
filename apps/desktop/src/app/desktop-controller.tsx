@@ -269,6 +269,18 @@ export function DesktopController() {
     }
   }, [])
 
+  // Clicking a native OS notification routes here to surface the conversation
+  // that fired it (the main process already brought the window forward).
+  useEffect(() => {
+    const unsubscribe = window.hermesDesktop?.onFocusSession?.(sessionId => {
+      if (sessionId) {
+        navigate(sessionRoute(sessionId))
+      }
+    })
+
+    return () => unsubscribe?.()
+  }, [navigate])
+
   // hermes:// deep links (e.g. a docs "Send to App" button for an automation blueprint).
   // Build the equivalent /blueprint slash command from the payload and drop
   // it into the composer — the user reviews/edits, then sends; the agent (or

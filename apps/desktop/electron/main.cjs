@@ -5609,11 +5609,22 @@ ipcMain.handle('hermes:api', async (_event, request) => {
 
 ipcMain.handle('hermes:notify', (_event, payload) => {
   if (!Notification.isSupported()) return false
-  new Notification({
+  const notification = new Notification({
     title: payload?.title || 'Hermes',
     body: payload?.body || '',
     silent: Boolean(payload?.silent)
-  }).show()
+  })
+  // Clicking the OS notification brings Hermes forward and (if the payload
+  // carries a session) asks the renderer to jump to that conversation.
+  notification.on('click', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    focusWindow(mainWindow)
+    const sessionId = payload?.sessionId
+    if (sessionId) {
+      mainWindow.webContents.send('hermes:focus-session', sessionId)
+    }
+  })
+  notification.show()
   return true
 })
 
